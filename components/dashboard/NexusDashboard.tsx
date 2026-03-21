@@ -2,32 +2,24 @@
 
 import { useState } from "react";
 import { Brain, Cpu, RefreshCw } from "lucide-react";
-import { NexusAnalysis } from "@/types/geoMind";
+import { AnaliseGeopoliticaDTO } from "@/types/geoMind";
 import { NewsCard } from "./NewsCard";
 import { HistoricalChart } from "./HistoricalChart";
 import { GeopoliticalKPIs } from "./GeopoliticalKPIs";
 import { Playbook } from "./Playbook";
 import { MarketTicker } from "./MarketTicker";
 import { AnalyzeForm } from "./AnalyzeForm";
-import { DEMO_ANALYSIS } from "@/lib/demoData";
+import { DEMO_ANALISE } from "@/lib/demoData";
 
 interface NexusDashboardProps {
-  /** Pass an initial NexusAnalysis from SSR / server component */
-  initialAnalysis?: NexusAnalysis;
-  /** Set false to show premium-locked playbook items */
-  isPremium?: boolean;
+  initialAnalise?: AnaliseGeopoliticaDTO;
 }
 
-export function NexusDashboard({
-  initialAnalysis,
-  isPremium = true,
-}: NexusDashboardProps) {
-  const [analysis, setAnalysis] = useState<NexusAnalysis | null>(
-    initialAnalysis ?? DEMO_ANALYSIS
+export function NexusDashboard({ initialAnalise }: NexusDashboardProps) {
+  const [analise, setAnalise] = useState<AnaliseGeopoliticaDTO | null>(
+    initialAnalise ?? DEMO_ANALISE
   );
   const [loading, setLoading] = useState(false);
-
-  const bestMatch = analysis?.best_match ?? analysis?.historical_events?.[0] ?? null;
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 pb-16">
@@ -52,12 +44,12 @@ export function NexusDashboard({
             {loading && (
               <div className="flex items-center gap-1.5 text-xs text-blue-400">
                 <Cpu className="h-3 w-3 animate-pulse" />
-                <span className="hidden sm:block">Processando...</span>
+                <span className="hidden sm:block">Analisando…</span>
               </div>
             )}
-            {analysis && !loading && (
+            {analise && !loading && (
               <button
-                onClick={() => setAnalysis(null)}
+                onClick={() => setAnalise(null)}
                 className="flex items-center gap-1.5 rounded-md border border-slate-800 px-2 py-1 text-xs text-slate-400 hover:text-slate-200 hover:border-slate-700 transition-colors"
               >
                 <RefreshCw className="h-3 w-3" />
@@ -70,77 +62,57 @@ export function NexusDashboard({
 
       <main className="mx-auto max-w-7xl px-4 py-6">
         {/* ── Analyze Form ──────────────────────────────────────────────── */}
-        {!analysis && !loading && (
+        {!analise && !loading && (
           <div className="mx-auto max-w-xl mt-8">
             <div className="text-center mb-6">
               <h2 className="text-xl font-bold text-slate-100">
                 Analise uma Notícia Geopolítica
               </h2>
               <p className="text-sm text-slate-400 mt-1">
-                A IA conecta o evento atual com análogos históricos e gera um
-                playbook estratégico.
+                A IA conecta o evento atual com análogos históricos e gera
+                insights de mercado para o Brasil.
               </p>
             </div>
             <div className="rounded-xl border border-slate-800 bg-slate-900 p-4">
-              <AnalyzeForm
-                onResult={setAnalysis}
-                onLoading={setLoading}
-              />
+              <AnalyzeForm onResult={setAnalise} onLoading={setLoading} />
+            </div>
+          </div>
+        )}
+
+        {/* ── Loading skeleton ──────────────────────────────────────────── */}
+        {loading && !analise && (
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+            <div className="space-y-4 lg:col-span-2">
+              <NewsCard analise={null} loading />
+              <HistoricalChart analise={null} loading />
+              <Playbook analise={null} loading />
+            </div>
+            <div className="space-y-4">
+              <GeopoliticalKPIs analise={null} loading />
             </div>
           </div>
         )}
 
         {/* ── Dashboard Grid ────────────────────────────────────────────── */}
-        {(analysis || loading) && (
+        {analise && !loading && (
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-            {/* Left column — full height on mobile, 2/3 on desktop */}
+            {/* Left — 2/3 width */}
             <div className="space-y-4 lg:col-span-2">
-              {/* Notícia Ativa */}
-              <NewsCard news={analysis?.news_summary ?? null} loading={loading} />
-
-              {/* Rima Histórica */}
-              <HistoricalChart event={bestMatch} loading={loading} />
+              <NewsCard analise={analise} />
+              <HistoricalChart analise={analise} />
+              <Playbook analise={analise} />
             </div>
 
-            {/* Right column */}
+            {/* Right — 1/3 width */}
             <div className="space-y-4">
-              {/* KPIs Geopolíticos */}
-              <GeopoliticalKPIs
-                indicators={analysis?.geopolitical_indicators ?? null}
-                similarityScore={analysis?.overall_similarity_score ?? 0}
-                loading={loading}
-              />
-
-              {/* Playbook */}
-              <Playbook
-                recommendations={analysis?.playbook ?? []}
-                loading={loading}
-                isPremium={isPremium}
-              />
-            </div>
-          </div>
-        )}
-
-        {/* Loading state — show skeleton grid */}
-        {loading && !analysis && (
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-            <div className="space-y-4 lg:col-span-2">
-              <NewsCard news={null} loading />
-              <HistoricalChart event={null} loading />
-            </div>
-            <div className="space-y-4">
-              <GeopoliticalKPIs indicators={null} loading />
-              <Playbook recommendations={[]} loading />
+              <GeopoliticalKPIs analise={analise} />
             </div>
           </div>
         )}
       </main>
 
       {/* ── Market Ticker ─────────────────────────────────────────────── */}
-      <MarketTicker
-        initialMetrics={analysis?.market_metrics ?? []}
-        refreshIntervalMs={15_000}
-      />
+      <MarketTicker dados={analise?.dados_financeiros ?? null} />
     </div>
   );
 }

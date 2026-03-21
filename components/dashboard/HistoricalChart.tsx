@@ -1,91 +1,53 @@
 "use client";
 
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Legend,
-} from "recharts";
 import { History, TrendingUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { HistoricalEvent } from "@/types/geoMind";
+import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
+import { AnaliseGeopoliticaDTO } from "@/types/geoMind";
+import { cn } from "@/lib/utils";
 
-interface HistoricalChartProps {
-  event: HistoricalEvent | null;
+interface HistoricalMatchProps {
+  analise: AnaliseGeopoliticaDTO | null;
   loading?: boolean;
 }
 
-interface TooltipPayloadItem {
-  name: string;
-  value: number;
-  color: string;
-}
-
-interface CustomTooltipProps {
-  active?: boolean;
-  payload?: TooltipPayloadItem[];
-  label?: string;
-}
-
-function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
-  if (!active || !payload || payload.length === 0) return null;
-
-  const eventLabel = payload[0]?.name === "Atual"
-    ? null
-    : payload.find(p => p.name !== "Atual");
-
-  return (
-    <div className="bg-slate-900 border border-slate-700 rounded-lg p-3 shadow-xl min-w-[180px]">
-      <p className="text-xs text-slate-400 mb-2 font-medium">{label}</p>
-      {payload.map((entry, i) => (
-        <div key={i} className="flex items-center justify-between gap-4 text-sm">
-          <span className="flex items-center gap-1.5">
-            <span
-              className="h-2 w-2 rounded-full"
-              style={{ backgroundColor: entry.color }}
-            />
-            <span className="text-slate-300">{entry.name}</span>
-          </span>
-          <span className="font-bold text-slate-100">
-            {typeof entry.value === "number"
-              ? entry.value.toLocaleString("pt-BR", { maximumFractionDigits: 2 })
-              : entry.value}
-          </span>
-        </div>
-      ))}
-      {eventLabel && (
-        <div className="mt-2 pt-2 border-t border-slate-700">
-          <p className="text-xs text-blue-400 italic">
-            Contexto histórico análogo
-          </p>
-        </div>
-      )}
-    </div>
-  );
-}
-
-export function HistoricalChart({ event, loading }: HistoricalChartProps) {
-  if (loading || !event) {
+export function HistoricalChart({ analise, loading }: HistoricalMatchProps) {
+  if (loading || !analise) {
     return (
       <Card>
         <CardHeader>
           <Skeleton className="h-4 w-40" />
-          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-5 w-24" />
         </CardHeader>
-        <CardContent>
-          <Skeleton className="h-64 w-full" />
+        <CardContent className="space-y-3">
+          <Skeleton className="h-5 w-3/4" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-2 w-full" />
         </CardContent>
       </Card>
     );
   }
 
-  const similarityPct = Math.round(event.similarity_score * 100);
+  const correlationPct = Math.round(analise.historical_correlation_score * 100);
+
+  const badgeVariant =
+    correlationPct >= 70 ? "rose" : correlationPct >= 40 ? "amber" : "emerald";
+
+  const progressColor =
+    correlationPct >= 70
+      ? "bg-rose-500"
+      : correlationPct >= 40
+      ? "bg-amber-500"
+      : "bg-emerald-500";
+
+  const correlationLabel =
+    correlationPct >= 70
+      ? "Alta similaridade"
+      : correlationPct >= 40
+      ? "Similaridade moderada"
+      : "Baixa similaridade";
 
   return (
     <Card>
@@ -96,110 +58,49 @@ export function HistoricalChart({ event, loading }: HistoricalChartProps) {
             Rima Histórica
           </div>
         </CardTitle>
-        <div className="flex items-center gap-2">
-          <Badge variant="blue">
-            <TrendingUp className="h-3 w-3 mr-1" />
-            {similarityPct}% similar
-          </Badge>
-          <Badge variant="slate">{event.year}</Badge>
-        </div>
+        <Badge variant={badgeVariant}>
+          <TrendingUp className="h-3 w-3 mr-1" />
+          {correlationPct}% similar
+        </Badge>
       </CardHeader>
 
-      <CardContent>
-        <div className="mb-3">
-          <h4 className="text-sm font-semibold text-slate-200">{event.title}</h4>
-          <p className="text-xs text-slate-400 mt-1">{event.description}</p>
+      <CardContent className="space-y-4">
+        {/* Matched event */}
+        <div className="rounded-lg border border-slate-800 bg-slate-950/50 p-3">
+          <p className="text-xs text-slate-500 mb-1 uppercase tracking-wider">
+            Análogo histórico identificado
+          </p>
+          <p className="text-base font-bold text-slate-100">
+            {analise.historical_event_match}
+          </p>
         </div>
 
-        <ResponsiveContainer width="100%" height={260}>
-          <AreaChart
-            data={event.data_points}
-            margin={{ top: 5, right: 10, left: 0, bottom: 5 }}
-          >
-            <defs>
-              <linearGradient id="currentGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#10b981" stopOpacity={0.25} />
-                <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-              </linearGradient>
-              <linearGradient id="historicalGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.25} />
-                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-              </linearGradient>
-            </defs>
-
-            <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-
-            <XAxis
-              dataKey="date"
-              tick={{ fill: "#64748b", fontSize: 11 }}
-              tickLine={false}
-              axisLine={false}
-              tickFormatter={(val: string) =>
-                new Date(val).toLocaleDateString("pt-BR", {
-                  month: "short",
-                  day: "numeric",
-                })
-              }
-            />
-
-            <YAxis
-              tick={{ fill: "#64748b", fontSize: 11 }}
-              tickLine={false}
-              axisLine={false}
-              tickFormatter={(val: number) =>
-                val >= 1000
-                  ? `${(val / 1000).toFixed(0)}k`
-                  : val.toFixed(0)
-              }
-              width={45}
-            />
-
-            <Tooltip content={<CustomTooltip />} />
-
-            <Legend
-              wrapperStyle={{ fontSize: "12px", paddingTop: "12px" }}
-              formatter={(value: string) => (
-                <span style={{ color: "#94a3b8" }}>{value}</span>
+        {/* Correlation bar */}
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between text-xs">
+            <span
+              className={cn(
+                "font-medium",
+                correlationPct >= 70
+                  ? "text-rose-400"
+                  : correlationPct >= 40
+                  ? "text-amber-400"
+                  : "text-emerald-400"
               )}
-            />
+            >
+              {correlationLabel}
+            </span>
+            <span className="text-slate-400 tabular-nums font-bold">
+              {analise.historical_correlation_score.toFixed(2)}
+            </span>
+          </div>
+          <Progress value={correlationPct} barClassName={progressColor} />
+        </div>
 
-            <Area
-              type="monotone"
-              dataKey="historical_value"
-              name={`${event.year} — ${event.title}`}
-              stroke="#3b82f6"
-              strokeWidth={2}
-              strokeDasharray="5 3"
-              fill="url(#historicalGrad)"
-              dot={false}
-              activeDot={{
-                r: 5,
-                fill: "#3b82f6",
-                stroke: "#1e3a5f",
-                strokeWidth: 2,
-              }}
-            />
-
-            <Area
-              type="monotone"
-              dataKey="current_value"
-              name="Atual"
-              stroke="#10b981"
-              strokeWidth={2.5}
-              fill="url(#currentGrad)"
-              dot={false}
-              activeDot={{
-                r: 5,
-                fill: "#10b981",
-                stroke: "#064e3b",
-                strokeWidth: 2,
-              }}
-            />
-          </AreaChart>
-        </ResponsiveContainer>
-
-        <p className="text-xs text-slate-500 text-center mt-2">
-          Linha verde = preço atual · Linha azul tracejada = análogo histórico ({event.year})
+        <p className="text-xs text-slate-500 leading-relaxed">
+          Score calculado pelos agentes de IA comparando padrões estruturais,
+          atores envolvidos e dinâmica de mercado com o evento histórico mais
+          próximo.
         </p>
       </CardContent>
     </Card>

@@ -12,5 +12,5 @@ import { NexusDashboard } from "@/components/dashboard/NexusDashboard";
  *   return <NexusDashboard initialAnalysis={analysis} />;
  */
 export default function Home() {
-  return <NexusDashboard isPremium />;
+  return <NexusDashboard />;
 }
