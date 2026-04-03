@@ -1,16 +1,16 @@
 import { NexusDashboard } from "@/components/dashboard/NexusDashboard";
+import { getDashboardHoje, getSnapshotFinanceiro } from "@/lib/api";
 
-/**
- * Home page — Server Component.
- *
- * For SSR: fetch the latest analysis from GeoMind backend here
- * and pass it as `initialAnalysis` prop to avoid client-side loading flash.
- *
- * Example:
- *   import { getAnalysis } from "@/lib/api";
- *   const analysis = await getAnalysis("latest").catch(() => undefined);
- *   return <NexusDashboard initialAnalysis={analysis} />;
- */
-export default function Home() {
-  return <NexusDashboard />;
+export default async function Home() {
+  const [initialDashboard, initialFinanceiro] = await Promise.all([
+    getDashboardHoje().catch(() => undefined),
+    getSnapshotFinanceiro().catch(() => undefined),
+  ]);
+
+  return (
+    <NexusDashboard
+      initialDashboard={initialDashboard ?? undefined}
+      initialFinanceiro={initialFinanceiro ?? undefined}
+    />
+  );
 }

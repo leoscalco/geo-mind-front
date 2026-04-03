@@ -41,3 +41,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+
+# Claude Code internal
+.claude/

@@ -5,11 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AnaliseGeopoliticaDTO } from "@/types/geoMind";
+import { NoticiaAnaliseDTO } from "@/types/geoMind";
 import { cn } from "@/lib/utils";
 
 interface HistoricalMatchProps {
-  analise: AnaliseGeopoliticaDTO | null;
+  analise: NoticiaAnaliseDTO | null;
   loading?: boolean;
 }
 
@@ -30,18 +30,13 @@ export function HistoricalChart({ analise, loading }: HistoricalMatchProps) {
     );
   }
 
-  const correlationPct = Math.round(analise.historical_correlation_score * 100);
+  const historico = analise.analise_historica;
+  if (!historico) return null;
 
-  const badgeVariant =
-    correlationPct >= 70 ? "rose" : correlationPct >= 40 ? "amber" : "emerald";
-
+  const correlationPct = Math.round(historico.score_correlacao * 100);
+  const badgeVariant = correlationPct >= 70 ? "rose" : correlationPct >= 40 ? "amber" : "emerald";
   const progressColor =
-    correlationPct >= 70
-      ? "bg-rose-500"
-      : correlationPct >= 40
-      ? "bg-amber-500"
-      : "bg-emerald-500";
-
+    correlationPct >= 70 ? "bg-rose-500" : correlationPct >= 40 ? "bg-amber-500" : "bg-emerald-500";
   const correlationLabel =
     correlationPct >= 70
       ? "Alta similaridade"
@@ -65,13 +60,13 @@ export function HistoricalChart({ analise, loading }: HistoricalMatchProps) {
       </CardHeader>
 
       <CardContent className="space-y-4">
-        {/* Matched event */}
+        {/* Principal matched event */}
         <div className="rounded-lg border border-slate-800 bg-slate-950/50 p-3">
           <p className="text-xs text-slate-500 mb-1 uppercase tracking-wider">
             Análogo histórico identificado
           </p>
           <p className="text-base font-bold text-slate-100">
-            {analise.historical_event_match}
+            {historico.evento_historico_principal}
           </p>
         </div>
 
@@ -91,17 +86,35 @@ export function HistoricalChart({ analise, loading }: HistoricalMatchProps) {
               {correlationLabel}
             </span>
             <span className="text-slate-400 tabular-nums font-bold">
-              {analise.historical_correlation_score.toFixed(2)}
+              {historico.score_correlacao.toFixed(2)}
             </span>
           </div>
           <Progress value={correlationPct} barClassName={progressColor} />
         </div>
 
-        <p className="text-xs text-slate-500 leading-relaxed">
-          Score calculado pelos agentes de IA comparando padrões estruturais,
-          atores envolvidos e dinâmica de mercado com o evento histórico mais
-          próximo.
-        </p>
+        {/* Similar crises */}
+        {historico.crises_similares.length > 1 && (
+          <div className="space-y-1.5">
+            <p className="text-xs text-slate-500 uppercase tracking-wider">Outras crises similares</p>
+            {historico.crises_similares.slice(1, 4).map((crise, i) => (
+              <div key={i} className="flex items-center justify-between text-xs">
+                <span className="text-slate-400">
+                  {crise.nome} ({crise.ano})
+                </span>
+                <span className="text-slate-500 tabular-nums">
+                  {Math.round(crise.similaridade * 100)}%
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Narrative */}
+        {historico.narrativa_historica && (
+          <p className="text-xs text-slate-500 leading-relaxed border-t border-slate-800 pt-3">
+            {historico.narrativa_historica}
+          </p>
+        )}
       </CardContent>
     </Card>
   );
