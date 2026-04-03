@@ -5,16 +5,23 @@
  * Base URL is configured via NEXT_PUBLIC_GEOMIND_API_URL env var.
  *
  * Backend routes (FastAPI):
- *   POST /api/v1/analisar         → Submit news for analysis (AnaliseGeopoliticaDTO)
- *   GET  /api/v1/historico        → List recent analyses (?limite=10)
- *   GET  /api/v1/ultima-analise   → Get the most recent analysis
- *   GET  /health                  → Health check
+ *   GET  /api/v1/dashboard/hoje         → DashboardDiarioDTO (today)
+ *   GET  /api/v1/dashboard/{YYYY-MM-DD} → DashboardDiarioDTO (by date)
+ *   POST /api/v1/dashboard/trigger      → TriggerResponse (202)
+ *   POST /api/v1/analisar               → NoticiaAnaliseDTO (manual analysis)
+ *   GET  /api/v1/historico              → HistoricoDTO (paginated)
+ *   GET  /api/v1/financeiro/snapshot    → DadosFinanceirosDTO (live market data)
+ *   GET  /health                        → HealthResponse
  */
 
 import {
-  AnaliseGeopoliticaDTO,
   AnalisarRequest,
+  DadosFinanceirosDTO,
+  DashboardDiarioDTO,
   HealthResponse,
+  HistoricoDTO,
+  NoticiaAnaliseDTO,
+  TriggerResponse,
 } from "@/types/geoMind";
 
 const BASE_URL =
@@ -38,32 +45,77 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 }
 
 /**
- * Submit a news article for geopolitical analysis.
- * May take 30–90 s (3 sequential AI agents).
+ * Fetch today's dashboard (top 5 analysed news).
+ * Returns null if no dashboard exists yet (404).
+ */
+export async function getDashboardHoje(): Promise<DashboardDiarioDTO | null> {
+  try {
+    return await request<DashboardDiarioDTO>("/api/v1/dashboard/hoje");
+  } catch (err) {
+    if (err instanceof Error && err.message.includes("404")) return null;
+    throw err;
+  }
+}
+
+/**
+ * Fetch dashboard for a specific date (YYYY-MM-DD).
+ * Returns null if not found (404).
+ */
+export async function getDashboardPorData(
+  data: string
+): Promise<DashboardDiarioDTO | null> {
+  try {
+    return await request<DashboardDiarioDTO>(`/api/v1/dashboard/${data}`);
+  } catch (err) {
+    if (err instanceof Error && err.message.includes("404")) return null;
+    throw err;
+  }
+}
+
+/**
+ * Trigger the daily pipeline to generate today's dashboard (async — 202).
+ */
+export async function triggerDashboard(): Promise<TriggerResponse> {
+  return request<TriggerResponse>("/api/v1/dashboard/trigger", {
+    method: "POST",
+  });
+}
+
+/**
+ * Submit a news article for manual geopolitical analysis.
+ * May take 30–90 s (8 sequential AI agents).
  */
 export async function analisar(
   payload: AnalisarRequest
-): Promise<AnaliseGeopoliticaDTO> {
-  return request<AnaliseGeopoliticaDTO>("/api/v1/analisar", {
+): Promise<NoticiaAnaliseDTO> {
+  return request<NoticiaAnaliseDTO>("/api/v1/analisar", {
     method: "POST",
     body: JSON.stringify(payload),
   });
 }
 
 /**
- * List recent analyses. Defaults to the last 10.
+ * Paginated history of past dashboards.
  */
 export async function getHistorico(
-  limite = 10
-): Promise<AnaliseGeopoliticaDTO[]> {
-  return request<AnaliseGeopoliticaDTO[]>(`/api/v1/historico?limite=${limite}`);
+  limite = 10,
+  offset = 0
+): Promise<HistoricoDTO> {
+  return request<HistoricoDTO>(
+    `/api/v1/historico?limite=${limite}&offset=${offset}`
+  );
 }
 
 /**
- * Fetch the most recent analysis. Throws if none exist (404).
+ * Live financial snapshot (yfinance — ~15 min delay for US markets).
+ * Returns null on error (service unavailable).
  */
-export async function getUltimaAnalise(): Promise<AnaliseGeopoliticaDTO> {
-  return request<AnaliseGeopoliticaDTO>("/api/v1/ultima-analise");
+export async function getSnapshotFinanceiro(): Promise<DadosFinanceirosDTO | null> {
+  try {
+    return await request<DadosFinanceirosDTO>("/api/v1/financeiro/snapshot");
+  } catch {
+    return null;
+  }
 }
 
 /**

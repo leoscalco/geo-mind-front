@@ -5,33 +5,29 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  AnaliseGeopoliticaDTO,
-  BrasiliaSentiment,
-  MarketImpactForecast,
-} from "@/types/geoMind";
+import { NoticiaAnaliseDTO, SentimentoMercado, SentimentoPolitico } from "@/types/geoMind";
 import { cn } from "@/lib/utils";
 
 interface GeopoliticalKPIsProps {
-  analise: AnaliseGeopoliticaDTO | null;
+  analise: NoticiaAnaliseDTO | null;
   loading?: boolean;
 }
 
 const forecastConfig: Record<
-  MarketImpactForecast,
+  SentimentoMercado,
   { label: string; variant: "emerald" | "rose" | "slate"; icon: React.ReactNode }
 > = {
-  Bull: {
+  bull: {
     label: "Mercado Altista",
     variant: "emerald",
     icon: <TrendingUp className="h-3.5 w-3.5" />,
   },
-  Bear: {
+  bear: {
     label: "Mercado Baixista",
     variant: "rose",
     icon: <TrendingDown className="h-3.5 w-3.5" />,
   },
-  Neutral: {
+  neutro: {
     label: "Mercado Neutro",
     variant: "slate",
     icon: <Minus className="h-3.5 w-3.5" />,
@@ -39,13 +35,17 @@ const forecastConfig: Record<
 };
 
 const sentimentConfig: Record<
-  BrasiliaSentiment,
+  SentimentoPolitico,
   { variant: "emerald" | "rose" | "amber" }
 > = {
-  Positivo: { variant: "emerald" },
-  Negativo: { variant: "rose" },
-  Neutro: { variant: "amber" },
+  positivo: { variant: "emerald" },
+  negativo: { variant: "rose" },
+  neutro: { variant: "amber" },
 };
+
+function capitalize(s: string) {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
 
 function CorrelationGauge({ score }: { score: number }) {
   const pct = Math.round(score * 100);
@@ -102,16 +102,19 @@ export function GeopoliticalKPIs({ analise, loading }: GeopoliticalKPIsProps) {
     );
   }
 
-  const forecast = forecastConfig[analise.market_impact_forecast];
-  const sentiment = sentimentConfig[analise.brasilia_sentiment];
-  const correlationPct = Math.round(analise.historical_correlation_score * 100);
+  const macro = analise.analise_macro;
+  const historico = analise.analise_historica;
+
+  const sentimentoMercado = macro?.sentimento_mercado ?? "neutro";
+  const sentimentoBrasil = macro?.sentimento_brasil ?? "neutro";
+  const score = historico?.score_correlacao ?? 0;
+
+  const forecast = forecastConfig[sentimentoMercado];
+  const sentiment = sentimentConfig[sentimentoBrasil];
+  const correlationPct = Math.round(score * 100);
 
   const progressColor =
-    correlationPct >= 70
-      ? "bg-rose-500"
-      : correlationPct >= 40
-      ? "bg-amber-500"
-      : "bg-emerald-500";
+    correlationPct >= 70 ? "bg-rose-500" : correlationPct >= 40 ? "bg-amber-500" : "bg-emerald-500";
 
   return (
     <Card>
@@ -125,52 +128,80 @@ export function GeopoliticalKPIs({ analise, loading }: GeopoliticalKPIsProps) {
       </CardHeader>
 
       <CardContent className="space-y-4">
-        <CorrelationGauge score={analise.historical_correlation_score} />
+        {historico && <CorrelationGauge score={score} />}
 
         <div className="border-t border-slate-800 pt-4 space-y-3">
-          {/* Market Impact */}
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-slate-400">Impacto nos Mercados</span>
-            <Badge variant={forecast.variant}>
-              {forecast.icon}
-              <span className="ml-1">{forecast.label}</span>
-            </Badge>
-          </div>
+          {macro && (
+            <>
+              {/* Market Impact */}
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-400">Impacto nos Mercados</span>
+                <Badge variant={forecast.variant}>
+                  {forecast.icon}
+                  <span className="ml-1">{forecast.label}</span>
+                </Badge>
+              </div>
 
-          {/* Brasília Sentiment */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5">
-              <Activity className="h-3.5 w-3.5 text-amber-400" />
-              <span className="text-xs text-slate-400">Sentimento de Brasília</span>
-            </div>
-            <Badge variant={sentiment.variant}>
-              {analise.brasilia_sentiment}
-            </Badge>
-          </div>
+              {/* Brasil Sentiment */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <Activity className="h-3.5 w-3.5 text-amber-400" />
+                  <span className="text-xs text-slate-400">Sentimento Brasil</span>
+                </div>
+                <Badge variant={sentiment.variant}>{capitalize(sentimentoBrasil)}</Badge>
+              </div>
+            </>
+          )}
 
           {/* Correlation bar */}
-          <div className="space-y-1.5 pt-1">
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-slate-400">Score de correlação</span>
-              <span
-                className={cn(
-                  "font-bold tabular-nums",
-                  correlationPct >= 70
-                    ? "text-rose-400"
-                    : correlationPct >= 40
-                    ? "text-amber-400"
-                    : "text-emerald-400"
-                )}
-              >
-                {correlationPct}/100
-              </span>
+          {historico && (
+            <div className="space-y-1.5 pt-1">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-slate-400">Score de correlação</span>
+                <span
+                  className={cn(
+                    "font-bold tabular-nums",
+                    correlationPct >= 70
+                      ? "text-rose-400"
+                      : correlationPct >= 40
+                      ? "text-amber-400"
+                      : "text-emerald-400"
+                  )}
+                >
+                  {correlationPct}/100
+                </span>
+              </div>
+              <Progress value={correlationPct} barClassName={progressColor} />
+              <p className="text-xs text-slate-500">
+                Similaridade com evento histórico análogo
+              </p>
             </div>
-            <Progress value={correlationPct} barClassName={progressColor} />
-            <p className="text-xs text-slate-500">
-              Similaridade com evento histórico análogo
-            </p>
-          </div>
+          )}
         </div>
+
+        {/* Previsões de ativos */}
+        {macro && macro.previsoes_ativos.length > 0 && (
+          <div className="border-t border-slate-800 pt-3 space-y-2">
+            <p className="text-xs text-slate-500 uppercase tracking-wider">Previsões</p>
+            {macro.previsoes_ativos.slice(0, 4).map((p, i) => (
+              <div key={i} className="flex items-center justify-between text-xs">
+                <span className="text-slate-400">{p.ativo}</span>
+                <span
+                  className={cn(
+                    "font-semibold",
+                    p.direcao === "bull"
+                      ? "text-emerald-400"
+                      : p.direcao === "bear"
+                      ? "text-rose-400"
+                      : "text-slate-400"
+                  )}
+                >
+                  {p.magnitude_esperada}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
       </CardContent>
     </Card>
   );

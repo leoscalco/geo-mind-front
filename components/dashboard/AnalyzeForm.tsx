@@ -3,17 +3,17 @@
 import { useState } from "react";
 import { Brain, Clock, Send } from "lucide-react";
 import { analisar } from "@/lib/api";
-import { AnaliseGeopoliticaDTO } from "@/types/geoMind";
+import { NoticiaAnaliseDTO } from "@/types/geoMind";
 
 interface AnalyzeFormProps {
-  onResult: (analise: AnaliseGeopoliticaDTO) => void;
+  onResult: (analise: NoticiaAnaliseDTO) => void;
   onLoading: (loading: boolean) => void;
 }
 
 const EXAMPLE = {
   titulo: "Escalada no Oriente Médio: Bloqueio do Estreito de Ormuz",
   conteudo:
-    "Tensões geopolíticas elevam o risco de crise energética global com petróleo a USD 120/barril.",
+    "Tensões geopolíticas elevam o risco de crise energética global com petróleo a USD 120/barril. Irã ameaça fechar o Estreito de Ormuz em resposta a novas sanções americanas, interrompendo 20% do fornecimento mundial de petróleo.",
   fonte: "Reuters",
 };
 
@@ -25,7 +25,9 @@ export function AnalyzeForm({ onResult, onLoading }: AnalyzeFormProps) {
   const [status, setStatus] = useState<string | null>(null);
 
   const canSubmit =
-    titulo.trim().length >= 5 && conteudo.trim().length >= 10;
+    titulo.trim().length >= 5 &&
+    conteudo.trim().length >= 20 &&
+    fonte.trim().length >= 1;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,7 +41,7 @@ export function AnalyzeForm({ onResult, onLoading }: AnalyzeFormProps) {
       const result = await analisar({
         titulo: titulo.trim(),
         conteudo: conteudo.trim(),
-        fonte: fonte.trim() || undefined,
+        fonte: fonte.trim(),
       });
 
       onResult(result);
@@ -89,18 +91,17 @@ export function AnalyzeForm({ onResult, onLoading }: AnalyzeFormProps) {
         <textarea
           value={conteudo}
           onChange={(e) => setConteudo(e.target.value)}
-          placeholder="Cole o texto completo ou resumo da notícia…"
+          placeholder="Cole o texto completo ou resumo da notícia (mínimo 20 caracteres)…"
           rows={4}
-          minLength={10}
+          minLength={20}
           className="w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-100 placeholder-slate-600 focus:border-slate-600 focus:outline-none resize-none"
         />
       </div>
 
-      {/* Fonte (opcional) */}
+      {/* Fonte */}
       <div className="flex flex-col gap-1">
         <label className="text-xs text-slate-400 font-medium">
-          Fonte{" "}
-          <span className="text-slate-600">(opcional)</span>
+          Fonte <span className="text-rose-400">*</span>
         </label>
         <input
           type="text"
@@ -114,7 +115,7 @@ export function AnalyzeForm({ onResult, onLoading }: AnalyzeFormProps) {
       {/* Processing hint */}
       <div className="flex items-center gap-1.5 text-xs text-slate-500">
         <Clock className="h-3 w-3" />
-        A análise pode levar 30–90 s (3 agentes de IA em sequência)
+        A análise pode levar 30–90 s (8 agentes de IA em sequência)
       </div>
 
       {/* Status / Error */}
