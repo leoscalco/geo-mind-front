@@ -233,6 +233,46 @@ export interface TriggerResponse {
   job_id: string;
 }
 
+// ─── MiroFish Simulation ─────────────────────────────────────────────────────
+
+export type StatusSimulacao =
+  | "pendente"
+  | "gerando_grafo"
+  | "preparando"
+  | "simulando"
+  | "gerando_relatorio"
+  | "concluido"
+  | "falhou";
+
+export interface SimulacaoStatusDTO {
+  id: string;
+  noticia_id: string;
+  titulo_noticia: string;
+  status: StatusSimulacao;
+  progresso: number; // 0-100
+  rounds_completados: number;
+  agentes_count: number;
+  iniciado_em: string;
+  concluido_em: string | null;
+  erro: string | null;
+}
+
+export interface SimulacaoRelatorioDTO {
+  id: string;
+  noticia_id: string;
+  titulo_noticia: string;
+  rounds_completados: number;
+  agentes_count: number;
+  relatorio_markdown: string;
+  concluido_em: string;
+}
+
+export interface TriggerSimulacaoResponse {
+  mensagem: string;
+  simulacao_id: string;
+  status: StatusSimulacao;
+}
+
 // ─── Health ───────────────────────────────────────────────────────────────────
 
 export interface HealthResponse {

@@ -21,7 +21,10 @@ import {
   HealthResponse,
   HistoricoDTO,
   NoticiaAnaliseDTO,
+  SimulacaoRelatorioDTO,
+  SimulacaoStatusDTO,
   TriggerResponse,
+  TriggerSimulacaoResponse,
 } from "@/types/geoMind";
 
 const BASE_URL =
@@ -117,6 +120,41 @@ export async function getSnapshotFinanceiro(): Promise<DadosFinanceirosDTO | nul
     return null;
   }
 }
+
+// ─── MiroFish Simulation ─────────────────────────────────────────────────────
+
+/**
+ * Inicia uma simulação MiroFish on-demand para uma notícia. Retorna 202.
+ */
+export async function iniciarSimulacao(
+  noticiaId: string
+): Promise<TriggerSimulacaoResponse> {
+  return request<TriggerSimulacaoResponse>(`/api/v1/simulacao/${noticiaId}`, {
+    method: "POST",
+  });
+}
+
+/**
+ * Consulta o status de uma simulação. Use para polling (a cada 5s).
+ */
+export async function getSimulacaoStatus(
+  simulacaoId: string
+): Promise<SimulacaoStatusDTO> {
+  return request<SimulacaoStatusDTO>(`/api/v1/simulacao/${simulacaoId}/status`);
+}
+
+/**
+ * Retorna o relatório completo em markdown. Disponível apenas quando status="concluido".
+ */
+export async function getSimulacaoRelatorio(
+  simulacaoId: string
+): Promise<SimulacaoRelatorioDTO> {
+  return request<SimulacaoRelatorioDTO>(
+    `/api/v1/simulacao/${simulacaoId}/relatorio`
+  );
+}
+
+// ─── Health ───────────────────────────────────────────────────────────────────
 
 /**
  * Health check.

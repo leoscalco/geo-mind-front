@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { NoticiaAnaliseDTO } from "@/types/geoMind";
+import { MiroFishPanel } from "./MiroFishPanel";
 
 interface PlaybookProps {
   analise: NoticiaAnaliseDTO | null;
@@ -150,6 +151,9 @@ export function Playbook({ analise, loading }: PlaybookProps) {
           </CardContent>
         </Card>
       )}
+
+      {/* MiroFish simulation */}
+      {analise && <MiroFishPanel noticiaId={analise.id} />}
     </div>
   );
 }
