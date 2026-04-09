@@ -255,6 +255,9 @@ export interface SimulacaoStatusDTO {
   iniciado_em: string;
   concluido_em: string | null;
   erro: string | null;
+  world_base_id?: string | null;
+  event_id?: string | null;
+  mode?: string | null;
 }
 
 export interface SimulacaoRelatorioDTO {
@@ -265,18 +268,26 @@ export interface SimulacaoRelatorioDTO {
   agentes_count: number;
   relatorio_markdown: string;
   concluido_em: string;
+  world_base_id?: string | null;
+  event_id?: string | null;
+  mode?: string | null;
 }
 
 export interface TriggerSimulacaoResponse {
   mensagem: string;
   simulacao_id: string;
   status: StatusSimulacao;
+  mode: string;
+  world_base_id: string;
+  event_id: string;
 }
 
 // ─── Health ───────────────────────────────────────────────────────────────────
 
 export interface HealthResponse {
   status: string;
-  version: string;
-  env: string;
+  modelo_llm: string;
+  ambiente: string;
+  langfuse: boolean;
+  scheduler_hora: number;
 }

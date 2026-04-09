@@ -17,7 +17,7 @@ npm run lint
 
 ## Backend API
 
-Connects to GeoMind FastAPI at `http://localhost:8000` (or `NEXT_PUBLIC_GEOMIND_API_URL`).
+Connects to GeoMind FastAPI at `http://localhost:8010` (or `NEXT_PUBLIC_GEOMIND_API_URL`).
 
 ### Key Endpoints
 

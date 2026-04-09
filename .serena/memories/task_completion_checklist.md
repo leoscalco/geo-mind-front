@@ -1,0 +1,1 @@
+When finishing work in this repo, at minimum run npm run lint. If changes affect build/runtime behavior, also run npm run build. There is no test suite configured in package.json currently, so verification relies on lint/build and manual validation of the affected UI/backend flows.

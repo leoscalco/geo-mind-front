@@ -1,0 +1,1 @@
+Common commands on Darwin/macOS for this project: npm run dev (frontend dev server on localhost:3000), npm run build (production build), npm run start (serve production build), npm run lint (ESLint). Basic shell utilities available/expected: git, ls, cd, rg, find, sed, cat. Backend URL expected by frontend: NEXT_PUBLIC_GEOMIND_API_URL, otherwise defaults to http://localhost:8010.
